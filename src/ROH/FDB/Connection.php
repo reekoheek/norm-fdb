@@ -156,9 +156,40 @@ class Connection extends NormConnection
                     $key = '_'.substr($key, 1);
                 }
 
+                $rowValue = isset($row[$key]) ? $row[$key] : null;
                 switch($operator) {
                     case '=':
-                        if ($value != $row[$key]) {
+                        if ($value != $rowValue) {
+                            return false;
+                        }
+                        break;
+                    case 'ne':
+                        if ($value == $rowValue) {
+                            return false;
+                        }
+                        break;
+                    case 'lt':
+                        if ($value >= $rowValue) {
+                            return false;
+                        }
+                        break;
+                    case 'lte':
+                        if ($value > $rowValue) {
+                            return false;
+                        }
+                        break;
+                    case 'gt':
+                        if ($value <= $rowValue) {
+                            return false;
+                        }
+                        break;
+                    case 'gte':
+                        if ($value < $rowValue) {
+                            return false;
+                        }
+                        break;
+                    case 'in':
+                        if (!in_array($rowValue, $value)) {
                             return false;
                         }
                         break;
