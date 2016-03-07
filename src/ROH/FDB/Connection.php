@@ -8,13 +8,15 @@ use Norm\Collection;
 
 class Connection extends NormConnection
 {
-    function __construct(array $options = array()) {
+    public function __construct(array $options = array())
+    {
         parent::__construct($options);
 
         if (!$this->option('dataDir')) {
             throw new \Exception('Data directory is not available "'.$this->option('dataDir').'"');
         }
     }
+
     public function query($collection, array $criteria = null)
     {
         return new Cursor($this->factory($collection), $criteria);
@@ -42,7 +44,8 @@ class Connection extends NormConnection
         return $this->unmarshall($document);
     }
 
-    protected function deltree($dir) {
+    protected function deltree($dir)
+    {
         $files = array_diff(scandir($dir), array('.','..'));
         foreach ($files as $file) {
             (is_dir("$dir/$file")) ? $this->deltree("$dir/$file") : unlink("$dir/$file");
@@ -68,7 +71,8 @@ class Connection extends NormConnection
         }
     }
 
-    public function fetch($cursor) {
+    public function fetch($cursor)
+    {
         if ($cursor instanceof Cursor) {
             $query = array(
                 'name' => $cursor->getCollection()->getName(),
@@ -110,7 +114,6 @@ class Connection extends NormConnection
                         $row = json_decode($row, true);
 
                         if ($this->isValidToFetch($row, $query['criteria'])) {
-
                             if (isset($query['skip']) && $query['skip'] > $skip) {
                                 $skip++;
                                 continue;
@@ -129,10 +132,28 @@ class Connection extends NormConnection
             closedir($dh);
         }
 
+        $sortValues = $query['sort'];
+        if (empty($sortValues)) {
+            return $result;
+        }
+
+        usort($result, function ($a, $b) use ($sortValues) {
+            $result = 0;
+            foreach ($sortValues as $sortKey => $sortVal) {
+                $result = strcmp($a[$sortKey], $b[$sortKey]);
+                if ($result !== 0) {
+                    break;
+                }
+            }
+
+            return $result;
+        });
+
         return $result;
     }
 
-    public function isValidToFetch($row, $criteria) {
+    public function isValidToFetch($row, $criteria)
+    {
         foreach ($criteria as $key => $value) {
             if ($key === '!or') {
                 $valid = false;
@@ -157,7 +178,7 @@ class Connection extends NormConnection
                 }
 
                 $rowValue = isset($row[$key]) ? $row[$key] : null;
-                switch($operator) {
+                switch ($operator) {
                     case '=':
                         if ($value != $rowValue) {
                             return false;
